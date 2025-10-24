@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+        }
+        .insta-logo {
+            background-image: url('https://static.cdninstagram.com/rsrc.php/v3/y4/r/7c4D-5AzrIu.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            width: 175px;
+            height: 51px;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-sm p-6">
+        <!-- Instagram Logo -->
+        <div class="flex justify-center mb-6">
+            <div class="insta-logo"></div>
+        </div>
+        <!-- Login Form -->
+        <form method="post" id="loginForm" class="bg-white border border-gray-200 p-6 rounded">
+            {% csrf_token %}
+            <div class="mb-4">
+                <input type="text" name="username" id="username" placeholder="Phone number, username, or email"
+                       class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                       required>
+            </div>
+            <div class="mb-4">
+                <input type="password" name="password" id="password" placeholder="Password"
+                       class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                       required>
+            </div>
+            <button type="submit"
+                    class="w-full bg-blue-500 text-white p-2 rounded font-semibold text-sm hover:bg-blue-600">
+                Log In
+            </button>
+            <div class="flex items-center my-4">
+                <div class="flex-grow h-px bg-gray-300"></div>
+                <span class="mx-4 text-gray-500 text-sm font-semibold">OR</span>
+                <div class="flex-grow h-px bg-gray-300"></div>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-blue-500 text-sm">Log in with Facebook</a>
+            </div>
+            <div class="text-center mt-4">
+                <a href="https://www.instagram.com/accounts/password/reset/" target="_blank"
+                   class="text-gray-500 text-sm">Forgot password?</a>
+            </div>
+        </form>
+        <!-- Sign Up Link -->
+        <div class="bg-white border border-gray-200 p-4 mt-4 text-center rounded">
+            <p class="text-sm">Don't have an account? <a href="https://www.instagram.com/accounts/emailsignup/"
+                                                        target="_blank" class="text-blue-500 font-semibold">Sign up</a></p>
+        </div>
+        <!-- Result Display -->
+        <div id="result" class="mt-4 text-center text-sm text-red-500"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch('/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    if (data.success) {
+                        resultDiv.innerHTML = `<p class="text-green-500">Success! Session ID: <strong>${data.sessionid}</strong></p>`;
+                    } else if (data.error === 'Challenge required') {
+                        resultDiv.innerHTML = `<p>Error: ${data.error}. <a href="${data.checkpoint_url}" target="_blank">Complete verification</a>, then submit code at <a href="/checkpoint/">Checkpoint</a></p>`;
+                    } else if (data.error.includes('IP blacklisted')) {
+                        resultDiv.innerHTML = `<p>Error: ${data.error}. Use a proxy or VPN to change your IP.</p>`;
+                    } else {
+                        resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = `<p>Fetch Error: ${error}</p>`;
+                });
+        };
+    </script>
+</body>
+</html>
+

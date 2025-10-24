@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><title>Instagram Checkpoint</title></head>
+<body>
+    <h1>Enter Verification Code</h1>
+    <p>Instagram requires verification. Check your email or SMS for a code and enter it below.</p>
+    <form method="post" id="checkpointForm">
+        {% csrf_token %}
+        <p><label for="code">Verification Code:</label></p>
+        <p><input type="text" name="code" id="code" required></p>
+        <input type="hidden" name="username" value="{{ username }}">
+        <input type="hidden" name="password" value="{{ password }}">
+        <button type="submit">Submit Code</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('checkpointForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch('/checkpoint/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    if (data.success) {
+                        resultDiv.innerHTML = `<p>Success! Session ID: <strong>${data.sessionid}</strong></p>`;
+                    } else {
+                        resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = `<p>Fetch Error: ${error}</p>`;
+                });
+        };
+    </script>
+</body>
+</html>
