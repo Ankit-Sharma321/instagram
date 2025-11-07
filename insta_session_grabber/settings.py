@@ -125,6 +125,3 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # FERNET_KEY="sLzL_LhroSF0hjsJbjWjID8d-OdiHSJF56rnY6fs0IQ="
-
-
-    

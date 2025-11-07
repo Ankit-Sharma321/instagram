@@ -40,7 +40,7 @@ class InstagramLoginForm(forms.ModelForm):
             raise forms.ValidationError("Password must be at least 6 characters.")
         return password
 
-    # THIS IS THE MISSING PIECE
+  
     def save(self, commit=True):
         account = super().save(commit=False)
         if commit:
