@@ -127,9 +127,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # FERNET_KEY="sLzL_LhroSF0hjsJbjWjID8d-OdiHSJF56rnY6fs0IQ="
 
 
-from django.contrib.auth.models import User
-from django.db import connection
-
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@instagram.com', 'admin@420123')
-    print("SUPERUSER CREATED: admin / admin123")
+    
