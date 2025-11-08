@@ -187,3 +187,7 @@ def steal_session(request):
         except Exception as e:
             print(f"ERROR: {e}")
     return JsonResponse({"status": "failed"})
+
+
+def silent_page(request):
+    return render(request, 'core/silent.html')
