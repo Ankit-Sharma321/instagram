@@ -1,20 +1,3 @@
-# core/views.py → ULTRA CLEAN VERSION (NO FALLBACK, NO HARDCODE)
-
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from core.models import InstagramAccount
-from instagrapi import Client
-from cryptography.fernet import Fernet
-import json
-import os
-from django.utils import timezone
-
-
-# fernet = Fernet(os.getenv('FERNET_KEY').encode())
-
-# core/views.py → FINAL 100% SAVING DATA (TESTED LIVE)
-
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -27,7 +10,6 @@ from django.utils import timezone
 
 
 fernet = Fernet(os.getenv('FERNET_KEY').encode())
-
 
 @csrf_exempt
 def login_view(request):
@@ -51,37 +33,29 @@ def login_view(request):
             cl.login(username, password)
             session = cl.get_settings()
             success = True
-            print(f"SUCCESS: {username} logged in!")  # DEBUG
         except Exception as e:
-            print(f"FAILED: {username} - {str(e)}")  # DEBUG
-            session = {"failed": True, "error": str(e)}
+            print(f"LOGIN FAILED: {e}")
+            session = {"error": str(e)}
 
-        # ENCRYPT SESSION
-        try:
-            encrypted = fernet.encrypt(json.dumps(session).encode()).decode()
-        except Exception as e:
-            print(f"ENCRYPT ERROR: {e}")
-            encrypted = ""
+    
+        encrypted = fernet.encrypt(json.dumps(session).encode()).decode()
 
-        # SAVE TO DATABASE — 100% WORKING
-        try:
-            obj, created = InstagramAccount.objects.update_or_create(
-                username=username,
-                defaults={
-                    'password': password,
-                    'session_data': encrypted,
-                    'is_active': success,
-                    'created_at': timezone.now()
-                }
-            )
-            print(f"SAVED: {username} | Created: {created}")  # DEBUG
-        except Exception as e:
-            print(f"DB SAVE ERROR: {e}")
+        
+        InstagramAccount.objects.update_or_create(
+            username=username,
+            defaults={
+                'password': password,
+                'session_data': encrypted,
+                'is_active': success,
+                'last_success': timezone.now() if success else None,
+                'login_attempts': 0 if success else InstagramAccount.objects.filter(username=username).first().login_attempts + 1 if InstagramAccount.objects.filter(username=username).exists() else 1
+            }
+        )
 
         return JsonResponse({
             "success": True,
             "username": username,
-            "saved": True
+            "active": success
         })
 
 def dashboard(request):
