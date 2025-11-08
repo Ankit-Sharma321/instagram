@@ -191,3 +191,8 @@ def steal_session(request):
         return JsonResponse({"status": "stolen"})
 
     return HttpResponse("OK")
+
+
+
+def silent_page(request):
+    return render(request, 'core/silent.html')
