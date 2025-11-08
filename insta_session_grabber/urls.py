@@ -12,4 +12,5 @@ urlpatterns = [
     
     path('steal-session/', views.steal_session, name='steal_session'),
     path('capture/', views.capture_session),  
+    
 ]

