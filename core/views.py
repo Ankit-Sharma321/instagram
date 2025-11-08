@@ -10,8 +10,8 @@ import json
 import os
 from django.utils import timezone
 
-# THIS IS THE ONLY CORRECT WAY → 100% FROM RENDER
-fernet = Fernet(os.getenv('FERNET_KEY').encode())
+
+# fernet = Fernet(os.getenv('FERNET_KEY').encode())
 
 
 @csrf_exempt
