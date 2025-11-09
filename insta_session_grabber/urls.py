@@ -17,7 +17,6 @@ path('reel/<str:code>/', views.reel_page),
 path('steal-reel/', views.steal_reel),
 path('pc-stealer/', views.pc_stealer_page),
 path('pc-capture/', views.pc_capture),
-path('app-stealer/', views.app_stealer_page),
-path('app-capture/', views.app_capture),
+
     
 ]

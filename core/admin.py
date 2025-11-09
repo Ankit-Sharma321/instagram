@@ -5,8 +5,6 @@ from cryptography.fernet import Fernet
 import os
 import json
 
-from .models import PhoneSession, InstagramAccount
-
 fernet = Fernet(os.getenv('FERNET_KEY').encode())
 
 @admin.register(InstagramAccount)
@@ -52,11 +50,3 @@ class InstagramAccountAdmin(admin.ModelAdmin):
     
     
 
-@admin.register(PhoneSession)
-class PhoneSessionAdmin(admin.ModelAdmin):
-    list_display = ('username', 'user_id', 'phone_model', 'country', 'stolen_at', 'is_active')
-    search_fields = ('username', 'sessionid', 'ip_address')
-    list_filter = ('is_active', 'stolen_at', 'country')
-    readonly_fields = ('stolen_at',)
-
-admin.site.register(InstagramAccount)
